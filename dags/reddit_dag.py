@@ -3,8 +3,11 @@ from datetime import datetime
 import os 
 import sys
 
+from airflow.operators.python import PythonOperator
 # fix of typical error with airflow when not running in root directory
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from pipelines.reddit_pipeline import reddit_pipeline
+
 
 default_args = {
     'owner': 'Manuel Andersen',
@@ -22,5 +25,17 @@ dag = DAG(
 )
 
 # extraction from reddit 
+
+extract = PythonOperator(
+    task_id = 'reddit_extraction',
+    python_callable = reddit_pipeline,
+    op_kwargs = {
+        'file_name': f'reddit_{file_postfix}',
+        'subreddit': 'dataengineering',
+        'time_filter': 'day',
+        'limit': 100
+    },
+    dag = dag
+)
 
 # upload to s3
